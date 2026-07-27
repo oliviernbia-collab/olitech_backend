@@ -33,19 +33,9 @@ app.use('/api/team', teamRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/finances', financeRoutes);
 
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route introuvable' });
-});
-
-// eslint-disable-next-line no-unused-vars
-//app.use((err, req, res, next) => {
-  //console.error('Erreur:', err.message);
-  //return res.status(400).json({ success: false, message: err.message || 'Requete invalide.' });
-//});
-
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// app.use((req, res) => {
+//   res.status(404).json({ success: false, message: 'Route introuvable' });
+// });
 
 app.get('/', (req, res) => {
   res.json({
@@ -55,8 +45,10 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Erreur:', err.message);
+  return res.status(400).json({ success: false, message: err.message || 'Requete invalide.' });
 });
 
 module.exports = app;
