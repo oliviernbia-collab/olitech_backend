@@ -38,9 +38,25 @@ app.use((req, res) => {
 });
 
 // eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  console.error('Erreur:', err.message);
-  return res.status(400).json({ success: false, message: err.message || 'Requete invalide.' });
+//app.use((err, req, res, next) => {
+  //console.error('Erreur:', err.message);
+  //return res.status(400).json({ success: false, message: err.message || 'Requete invalide.' });
+//});
+
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bienvenue sur l’API OliTech',
+    version: '1.0.0'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 module.exports = app;
