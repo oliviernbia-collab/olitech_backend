@@ -108,7 +108,7 @@ const companySettings = {
     "À la tête d'OliTech, notre fondateur met son expertise technique et son sens du service au profit de chaque client, du premier contact jusqu'à la livraison du projet.",
   phone: '05 54 18 33 78',
   email: 'oliviernbia@gmail.com',
-  website: 'www.olitech.fr',
+  website: 'olitechnologie.com',
 };
 
 async function seedAdmin() {
@@ -185,11 +185,102 @@ async function seedSettings() {
   console.log('Paramètres entreprise insérés.');
 }
 
+const cvTemplates = [
+  {
+    slug: 'classique-marine',
+    layout_key: 'sidebar_timeline',
+    palette_key: 'navy',
+    name: 'Classique Marine',
+    description: 'Mise en page sobre a deux colonnes, ideale pour un profil professionnel polyvalent.',
+  },
+  {
+    slug: 'sobre-bleu',
+    layout_key: 'sidebar_timeline',
+    palette_key: 'navy_blue',
+    name: 'Sobre Bleu',
+    description: 'Design epure avec accents bleus, parfait pour un CV clair et facile a lire.',
+  },
+  {
+    slug: 'corporate-orange',
+    layout_key: 'sidebar_timeline',
+    palette_key: 'navy_orange',
+    name: 'Corporate Orange',
+    description: 'Mise en page structuree avec touches orange, pour un profil dynamique en entreprise.',
+  },
+  {
+    slug: 'executif-nuit',
+    layout_key: 'sidebar_timeline',
+    palette_key: 'dark_navy_orange',
+    name: 'Executif Nuit',
+    description: 'Design contraste fonce et orange, pour un profil senior ou executif.',
+  },
+  {
+    slug: 'compact-competences',
+    layout_key: 'sidebar_icons_skills',
+    palette_key: 'navy',
+    name: 'Compact Competences',
+    description: 'Barres de competences et icones par section, pour mettre en avant vos savoir-faire.',
+  },
+  {
+    slug: 'moderne-bleu',
+    layout_key: 'sidebar_icons_skills',
+    palette_key: 'navy_blue',
+    name: 'Moderne Bleu',
+    description: 'Sidebar coloree avec icones et barres de competences, pour un rendu moderne.',
+  },
+  {
+    slug: 'creatif-orange',
+    layout_key: 'sidebar_icons_skills',
+    palette_key: 'navy_orange',
+    name: 'Creatif Orange',
+    description: 'Design vivant avec icones et competences visuelles, pour les profils creatifs.',
+  },
+  {
+    slug: 'impact-nuit',
+    layout_key: 'sidebar_icons_skills',
+    palette_key: 'dark_navy_orange',
+    name: 'Impact Nuit',
+    description: 'Sidebar sombre a fort contraste, pour un CV qui ne passe pas inapercu.',
+  },
+  {
+    slug: 'etudiant-moderne',
+    layout_key: 'student_cv',
+    palette_key: 'navy_blue',
+    name: 'Etudiant Moderne',
+    description: 'Mise en page pensee pour un premier CV : stage, alternance ou premier emploi.',
+  },
+  {
+    slug: 'etudiant-classique',
+    layout_key: 'student_cv',
+    palette_key: 'navy',
+    name: 'Etudiant Classique',
+    description: 'Version sobre du CV etudiant, pour une candidature academique ou administrative.',
+  },
+];
+
+async function seedCvTemplates() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM cv_templates');
+  if (rows[0].count > 0) {
+    console.log('Modeles de CV deja presents en base, seed ignore.');
+    return;
+  }
+
+  for (let i = 0; i < cvTemplates.length; i += 1) {
+    const t = cvTemplates[i];
+    await pool.query(
+      'INSERT INTO cv_templates (slug, layout_key, palette_key, name, description, price_fcfa, sort_order) VALUES (?, ?, ?, ?, ?, 300, ?)',
+      [t.slug, t.layout_key, t.palette_key, t.name, t.description, i + 1]
+    );
+  }
+  console.log(`${cvTemplates.length} modeles de CV inseres.`);
+}
+
 async function main() {
   await seedAdmin();
   await seedServices();
   await seedPortfolio();
   await seedSettings();
+  await seedCvTemplates();
   await pool.end();
   console.log('Seed terminé.');
 }

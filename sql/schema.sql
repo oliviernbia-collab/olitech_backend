@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
   category VARCHAR(100) NULL,
   description TEXT NOT NULL,
   image_url VARCHAR(255) NULL,
+  image_public_id VARCHAR(255) NULL,
   link VARCHAR(255) NULL,
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -90,4 +91,58 @@ CREATE TABLE IF NOT EXISTS finances (
   description VARCHAR(255) NULL,
   entry_date DATE NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cv_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(60) NOT NULL UNIQUE,
+  layout_key VARCHAR(40) NOT NULL,
+  palette_key VARCHAR(40) NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  description TEXT NULL,
+  price_fcfa DECIMAL(12,2) NOT NULL DEFAULT 300.00,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cv_orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_reference VARCHAR(100) NOT NULL UNIQUE,
+  template_id INT NOT NULL,
+  buyer_name VARCHAR(150) NOT NULL,
+  buyer_email VARCHAR(150) NOT NULL,
+  buyer_phone VARCHAR(30) NULL,
+  photo_path VARCHAR(255) NULL,
+  photo_public_id VARCHAR(255) NULL,
+  form_data JSON NOT NULL,
+  amount_fcfa DECIMAL(12,2) NOT NULL DEFAULT 300.00,
+  status ENUM('pending_payment','paid','failed','cancelled') NOT NULL DEFAULT 'pending_payment',
+  pdf_path VARCHAR(255) NULL,
+  generated_at TIMESTAMP NULL,
+  email_sent_at TIMESTAMP NULL,
+  paid_manually_by VARCHAR(150) NULL,
+  paid_manually_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cv_orders_template FOREIGN KEY (template_id) REFERENCES cv_templates(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cv_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL,
+  reference VARCHAR(100) NOT NULL,
+  jeko_payment_request_id VARCHAR(100) NULL UNIQUE,
+  payment_method ENUM('wave','orange','mtn','moov','djamo','jeko') NOT NULL,
+  amount_cents INT NOT NULL,
+  currency VARCHAR(10) NOT NULL DEFAULT 'XOF',
+  status ENUM('pending','success','error') NOT NULL DEFAULT 'pending',
+  raw_request JSON NULL,
+  raw_response JSON NULL,
+  webhook_payload JSON NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cv_payments_order FOREIGN KEY (order_id) REFERENCES cv_orders(id),
+  INDEX idx_cv_payments_reference (reference)
 ) ENGINE=InnoDB;
