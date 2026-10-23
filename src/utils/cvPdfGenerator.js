@@ -44,7 +44,25 @@ async function generatePdf(order, template) {
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // 'networkidle0' n'aboutit pas de facon fiable sur un navigateur distant
+    // (trafic CDP/keep-alive en arriere-plan) : on attend juste le DOM, puis
+    // explicitement les images (photo du CV) avec une limite de temps courte.
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    await page
+      .evaluate(() =>
+        Promise.all(
+          Array.from(document.images)
+            .filter((img) => !img.complete)
+            .map(
+              (img) =>
+                new Promise((resolve) => {
+                  img.onload = resolve;
+                  img.onerror = resolve;
+                })
+            )
+        )
+      )
+      .catch(() => {});
 
     const orderDir = path.join(outputRoot, order.order_reference);
     fs.mkdirSync(orderDir, { recursive: true });
