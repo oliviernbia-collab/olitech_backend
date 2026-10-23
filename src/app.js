@@ -19,6 +19,11 @@ const cvPaymentRoutes = require('./routes/cvPaymentRoutes');
 
 const app = express();
 
+// Necessaire derriere un proxy/CDN (ex. la couche edge de l'hebergeur en
+// production) : sans ca, express-rate-limit refuse l'en-tete X-Forwarded-For
+// et ne peut pas identifier correctement l'IP reelle du visiteur.
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 
 // En-tetes de securite (Referrer-Policy: no-referrer par defaut, etc.).
