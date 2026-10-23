@@ -18,7 +18,8 @@ jobs:
       - name: Trust remote host
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 15 -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
+          test -s ~/.ssh/known_hosts
 
       # --delete nettoie les fichiers retires du depot, mais jamais les dossiers
       # exclus ci-dessous : .env (secrets, propre au serveur), uploads/ et private/
