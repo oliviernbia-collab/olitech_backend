@@ -36,6 +36,7 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           set +e
+          echo "::notice::lengths host=${#FTP_HOST} user=${#FTP_USER} pass=${#FTP_PASSWORD}"
           lftp -u "$FTP_USER,$FTP_PASSWORD" -e "
             set cmd:fail-exit yes;
             set ssl:verify-certificate no;
