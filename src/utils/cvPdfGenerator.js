@@ -24,6 +24,12 @@ function resolvePhotoUrl(photoPath) {
   return `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${base64}`;
 }
 
+// URL websocket d'un Chromium distant (ex. Browserless.io) — necessaire en
+// production sur de l'hebergement mutualise, ou lancer un Chromium local est
+// souvent impossible (bibliotheques systeme manquantes, pas d'acces root).
+// Vide en local : on lance alors un Chromium local comme avant.
+const REMOTE_WS_ENDPOINT = process.env.PUPPETEER_WS_ENDPOINT || '';
+
 async function generatePdf(order, template) {
   const renderer = getLayoutRenderer(template.layout_key);
   const palette = getPalette(template.palette_key);
@@ -32,7 +38,10 @@ async function generatePdf(order, template) {
 
   const html = renderer(formData, photoUrl, palette);
 
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+  const browser = REMOTE_WS_ENDPOINT
+    ? await puppeteer.connect({ browserWSEndpoint: REMOTE_WS_ENDPOINT })
+    : await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -47,7 +56,14 @@ async function generatePdf(order, template) {
     // via outputRoot, jamais expose comme URL publique directe.
     return path.join(order.order_reference, 'cv.pdf');
   } finally {
-    await browser.close();
+    // Un navigateur distant partage reste ouvert pour d'autres requetes :
+    // on se deconnecte seulement, on ne le ferme pas (close() le tuerait
+    // pour tout le monde). Un navigateur local, lui, doit etre ferme.
+    if (REMOTE_WS_ENDPOINT) {
+      browser.disconnect();
+    } else {
+      await browser.close();
+    }
   }
 }
 
