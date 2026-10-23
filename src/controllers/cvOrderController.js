@@ -7,6 +7,7 @@ const { finalizeOrderPayment } = require('../utils/cvOrderFulfillment');
 const { isCloudinaryConfigured } = require('../config/cloudinary');
 const { ALLOWED_TYPES: ALLOWED_PHOTO_TYPES, uploadDir: photoUploadDir } = require('../middleware/uploadCvPhoto');
 const { validateFileSignature, uploadBufferToCloudinary, saveBufferLocally } = require('../utils/mediaUpload');
+const { sendCvOrderCreatedNotification } = require('../utils/mailer');
 
 async function getTemplateById(id) {
   const [rows] = await pool.query('SELECT * FROM cv_templates WHERE id = ? AND is_active = 1 LIMIT 1', [id]);
@@ -64,6 +65,14 @@ async function create(req, res) {
         template.price_fcfa,
       ]
     );
+
+    sendCvOrderCreatedNotification({
+      order_reference: orderReference,
+      buyer_name,
+      buyer_email,
+      buyer_phone,
+      amount_fcfa: template.price_fcfa,
+    }).catch((err) => console.error("Echec de l'envoi de la notification de commande CV:", err.message));
 
     return res.status(201).json({ success: true, id: result.insertId, order_reference: orderReference });
   } catch (err) {

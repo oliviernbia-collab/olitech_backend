@@ -1,0 +1,49 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Trust remote host
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      # --delete nettoie les fichiers retires du depot, mais jamais les dossiers
+      # exclus ci-dessous : .env (secrets, propre au serveur), uploads/ et private/
+      # (donnees generees par les utilisateurs), node_modules (regenere par npm
+      # install plus bas), tmp (fichier de redemarrage Passenger).
+      - name: Sync backend source
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='uploads' \
+            --exclude='private' \
+            --exclude='tmp' \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/olitechbackend/"
+
+      - name: Install dependencies and restart app
+        run: |
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" '
+            set -e
+            source /home/${{ secrets.SSH_USER }}/nodevenv/olitechbackend/22/bin/activate
+            cd /home/${{ secrets.SSH_USER }}/olitechbackend
+            npm install --omit=dev
+            mkdir -p tmp
+            touch tmp/restart.txt
+          '

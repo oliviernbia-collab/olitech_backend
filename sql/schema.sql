@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS cv_orders (
   email_sent_at TIMESTAMP NULL,
   paid_manually_by VARCHAR(150) NULL,
   paid_manually_at TIMESTAMP NULL,
+  stale_alert_sent_at TIMESTAMP NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_cv_orders_template FOREIGN KEY (template_id) REFERENCES cv_templates(id)

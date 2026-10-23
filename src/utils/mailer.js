@@ -73,4 +73,67 @@ async function sendCvOrderPaidEmail(order, downloadUrl) {
   });
 }
 
-module.exports = { sendContactNotification, sendCvOrderPaidEmail };
+async function sendCvOrderCreatedNotification(order) {
+  await transporter.sendMail({
+    from: `"Site OliTech" <${process.env.SMTP_USER}>`,
+    to: process.env.NOTIFY_EMAIL,
+    subject: `Nouvelle commande CV — ${order.order_reference}`,
+    text: [
+      'Une nouvelle commande de CV vient d\'etre enregistree.',
+      '',
+      `Reference: ${order.order_reference}`,
+      `Client: ${order.buyer_name}`,
+      `Email: ${order.buyer_email}`,
+      `Telephone: ${order.buyer_phone || 'Non renseigne'}`,
+      `Montant: ${order.amount_fcfa} FCFA`,
+      '',
+      'Le CV sera genere et envoye automatiquement au client une fois le paiement confirme.',
+    ].join('\n'),
+    html: `
+      <p>Une nouvelle commande de CV vient d'etre enregistree.</p>
+      <p><strong>Reference :</strong> ${escapeHtml(order.order_reference)}</p>
+      <p><strong>Client :</strong> ${escapeHtml(order.buyer_name)}</p>
+      <p><strong>Email :</strong> ${escapeHtml(order.buyer_email)}</p>
+      <p><strong>Telephone :</strong> ${escapeHtml(order.buyer_phone) || 'Non renseigne'}</p>
+      <p><strong>Montant :</strong> ${escapeHtml(order.amount_fcfa)} FCFA</p>
+      <p>Le CV sera genere et envoye automatiquement au client une fois le paiement confirme.</p>
+    `,
+  });
+}
+
+async function sendStalePendingOrderAlert(order) {
+  await transporter.sendMail({
+    from: `"Site OliTech" <${process.env.SMTP_USER}>`,
+    to: process.env.NOTIFY_EMAIL,
+    subject: `Commande CV en attente depuis plus de 30 min — ${order.order_reference}`,
+    text: [
+      'Une commande de CV est toujours en attente de paiement confirme depuis plus de 30 minutes.',
+      'Le client a peut-etre paye sans que la notification Jeko ne soit arrivee au serveur.',
+      '',
+      `Reference: ${order.order_reference}`,
+      `Client: ${order.buyer_name}`,
+      `Email: ${order.buyer_email}`,
+      `Telephone: ${order.buyer_phone || 'Non renseigne'}`,
+      '',
+      'Verifiez le statut reel du paiement cote Jeko, puis au besoin utilisez',
+      '"Marquer paye manuellement" depuis le back-office pour cette commande.',
+    ].join('\n'),
+    html: `
+      <p>Une commande de CV est toujours en attente de paiement confirme depuis plus de 30 minutes.</p>
+      <p>Le client a peut-etre paye sans que la notification Jeko ne soit arrivee au serveur.</p>
+      <p><strong>Reference :</strong> ${escapeHtml(order.order_reference)}</p>
+      <p><strong>Client :</strong> ${escapeHtml(order.buyer_name)}</p>
+      <p><strong>Email :</strong> ${escapeHtml(order.buyer_email)}</p>
+      <p><strong>Telephone :</strong> ${escapeHtml(order.buyer_phone) || 'Non renseigne'}</p>
+      <p>Verifiez le statut reel du paiement cote Jeko, puis au besoin utilisez
+      "Marquer paye manuellement" depuis le back-office pour cette commande.</p>
+    `,
+  });
+}
+
+module.exports = {
+  sendContactNotification,
+  sendCvOrderPaidEmail,
+  sendCvOrderCreatedNotification,
+  sendStalePendingOrderAlert,
+};
