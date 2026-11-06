@@ -52,13 +52,18 @@ jobs:
             set ftp:ssl-force true;
             cd olitechbackend;
             mirror --reverse --delete --verbose --parallel=4 --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob .env --exclude-glob uploads/ --exclude-glob private/ --exclude-glob tmp/ --exclude-glob restart_trigger --exclude-glob lftp_*.log ./ ./;
+            set cmd:fail-exit no;
             mkdir -p tmp;
+            set cmd:fail-exit yes;
             put restart_trigger -o tmp/restart.txt;
             bye;
           " > lftp_output.log 2>&1
           code=$?
+          # Un avertissement de certificat par connexion de donnees noie sinon
+          # la vraie erreur dans les 3000 derniers caracteres.
+          grep -v 'Certificate verification' lftp_output.log
           if [ $code -ne 0 ]; then
-            cat lftp_output.log lftp_debug.log > combined.log 2>/dev/null
+            cat lftp_debug.log lftp_output.log 2>/dev/null | grep -v 'Certificate verification' > combined.log
             ESCAPED=$(tail -c 3000 combined.log | sed ':a;N;$!ba;s/\n/%0A/g')
             echo "::error::lftp exited $code: $ESCAPED"
             exit $code
