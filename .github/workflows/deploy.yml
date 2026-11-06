@@ -7,15 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install production dependencies
-        run: npm ci --omit=dev
 
       - name: Install lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
@@ -42,9 +36,9 @@ jobs:
       # olitechbackend est un dossier dedie a cette app (hors public_html), donc
       # --delete y est sans risque pour les autres sites. .env, uploads/ et
       # private/ restent proteges (donnees serveur / utilisateurs, jamais dans le
-      # depot). node_modules est synchronise a part (construit ici sur Linux x64,
-      # meme architecture que le serveur) pour eviter de le reconstruire via npm
-      # sur l'hebergeur, qui n'est accessible que par FTP.
+      # depot). node_modules n'est PAS envoye : ~9500 fichiers en FTPS prennent
+      # des heures. Quand package.json change, lancer "Run NPM Install" dans
+      # cPanel > Setup Node.js App.
       - name: Deploy over FTPS
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
@@ -57,8 +51,7 @@ jobs:
             set ftp:ssl-allow true;
             set ftp:ssl-force true;
             cd olitechbackend;
-            mirror --reverse --delete --verbose --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob .env --exclude-glob uploads/ --exclude-glob private/ --exclude-glob tmp/ ./ ./;
-            mirror --reverse --delete --verbose node_modules/ node_modules/;
+            mirror --reverse --delete --verbose --parallel=4 --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob .env --exclude-glob uploads/ --exclude-glob private/ --exclude-glob tmp/ --exclude-glob restart_trigger --exclude-glob lftp_*.log ./ ./;
             mkdir -p tmp;
             put restart_trigger -o tmp/restart.txt;
             bye;

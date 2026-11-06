@@ -1,13 +1,24 @@
 const pool = require('../config/db');
-const { sendStalePendingOrderAlert } = require('./mailer');
+const { sendStalePendingOrderAlert, isMailerConfigured } = require('./mailer');
 
 const STALE_THRESHOLD_MINUTES = 30;
+let missingSmtpWarned = false;
 
 // Alerte l'admin quand une commande reste "pending_payment" trop longtemps :
 // cas ou le client a paye mais ou le webhook Jeko n'a jamais atteint le
 // serveur (panne, mauvaise URL cote Jeko, etc.). stale_alert_sent_at evite
 // de renvoyer la meme alerte a chaque execution.
 async function checkStalePendingOrders() {
+  // Sans identifiants SMTP chaque envoi echoue : on previent une seule fois
+  // au lieu de remplir les logs a chaque execution.
+  if (!isMailerConfigured()) {
+    if (!missingSmtpWarned) {
+      console.warn('SMTP non configure (SMTP_HOST/SMTP_USER/SMTP_PASS) : alertes de commandes en attente desactivees.');
+      missingSmtpWarned = true;
+    }
+    return;
+  }
+
   const [rows] = await pool.query(
     `SELECT * FROM cv_orders
      WHERE status = 'pending_payment'

@@ -11,6 +11,10 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function isMailerConfigured() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 465,
@@ -132,6 +136,7 @@ async function sendStalePendingOrderAlert(order) {
 }
 
 module.exports = {
+  isMailerConfigured,
   sendContactNotification,
   sendCvOrderPaidEmail,
   sendCvOrderCreatedNotification,
