@@ -106,7 +106,7 @@ const companySettings = {
   ceo_title: 'Ingénieur Full Stack et DevOps',
   ceo_bio:
     "À la tête d'OliTech, notre fondateur met son expertise technique et son sens du service au profit de chaque client, du premier contact jusqu'à la livraison du projet.",
-  phone: '05 54 18 33 78',
+  phone: '+225 05 54 18 33 78',
   email: 'oliviernbia@gmail.com',
   website: 'olitechnologie.com',
 };
